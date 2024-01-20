@@ -7,7 +7,7 @@ problem = pulp.LpProblem('Simple_Problem', pulp.LpMaximize)
 def read_input(path : str) -> dict[str, list]:
     ret : dict[str, list] = dict()
     with open(path, "r") as file:
-        lines = file.readlines()
+        lines = file.readlines()[1:]
         for line in lines:
             values = line.strip().split(",")
             name, holidays = values[0], values[1:]
@@ -19,8 +19,13 @@ def read_input(path : str) -> dict[str, list]:
 def output(path : str, worker_dict : dict[str, list]) -> None :
     
     with open(path, "w") as file:
+        file.write("name")
+        for shift in range(len(next(iter(worker_dict.values())))):
+            file.write(f",shift{shift + 1}")
+        file.write("\n")
+
         for name, holiday_plans in worker_dict.items():
-            file.write(f"{name},")
+            file.write(f"{name}")
             for shift, holiday_plan in enumerate(holiday_plans):
                 var = getWorkerVar(name, shift)
                 if(var is None):
@@ -85,12 +90,14 @@ def create_cons(worker_dict : dict[str, list], n_worker : list) -> None:
 def setObjective(worker_dict : dict[str, list]):
     global problem
 
+    linExpr = list()
     for name, holiday_plans in worker_dict.items():
         for shift, holiday_plan in enumerate(holiday_plans):
             if(holiday_plan == "-1"):
                 continue
             if(holiday_plan == "1"):                
-                problem += -100 * getWorkerVar(name, shift)
+                linExpr.append(-100 * getWorkerVar(name, shift))
+    problem += sum(linExpr)
     
     return 
 
